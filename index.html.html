@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Inventario en Vivo</title>
+
+<style>
+body { font-family: Arial; background:#0f172a; color:white; text-align:center; }
+button { padding:10px; margin:5px; border-radius:10px; border:none; background:#22c55e; color:white; }
+.card { background:#1e293b; margin:10px auto; padding:15px; border-radius:15px; width:300px; }
+.delete { background:red; }
+</style>
+</head>
+
+<body>
+
+<h1>🍹 Inventario EN VIVO</h1>
+
+<button onclick="setLugar('antorcha')">🔥 ANTORCHA</button>
+<button onclick="setLugar('canaria')">🦜 CANARIA</button>
+
+<h2 id="lugar"></h2>
+
+<input id="nombre" placeholder="Bebida">
+<input id="cantidad" type="number" placeholder="Cantidad">
+
+<br>
+<button onclick="agregar()">Agregar</button>
+<button onclick="consumir()">Consumir</button>
+
+<div id="lista"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyD94BRdB9xHk0Ufek0p7Z_zso5ezhraMwo",
+  authDomain: "inventario-de-bebidas.firebaseapp.com",
+  projectId: "inventario-de-bebidas",
+  storageBucket: "inventario-de-bebidas.firebasestorage.app",
+  messagingSenderId: "171599759634",
+  appId: "1:171599759634:web:8c85d80612b5d136608bcb",
+  measurementId: "G-Z98YTFPEEP"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let lugarActual = "antorcha";
+
+window.setLugar = (l) => {
+  lugarActual = l;
+  document.getElementById("lugar").innerText = l.toUpperCase();
+  escuchar();
+};
+
+window.agregar = async () => {
+  let n = document.getElementById("nombre").value.toLowerCase();
+  let c = parseInt(document.getElementById("cantidad").value);
+
+  const ref = doc(db, "inventario", lugarActual, "bebidas", n);
+  const snap = await getDoc(ref);
+
+  let stock = snap.exists() ? snap.data().cantidad : 0;
+
+  await setDoc(ref, { cantidad: stock + c });
+};
+
+window.consumir = async () => {
+  let n = document.getElementById("nombre").value.toLowerCase();
+  let c = parseInt(document.getElementById("cantidad").value);
+
+  const ref = doc(db, "inventario", lugarActual, "bebidas", n);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return alert("No existe");
+  let stock = snap.data().cantidad;
+
+  if (stock < c) return alert("No hay stock");
+
+  await setDoc(ref, { cantidad: stock - c });
+};
+
+function escuchar() {
+  const lista = document.getElementById("lista");
+
+  onSnapshot(collection(db, "inventario", lugarActual, "bebidas"), (snapshot) => {
+    lista.innerHTML = "";
+    snapshot.forEach((docu) => {
+      lista.innerHTML += `
+        <div class="card">
+          <strong>${docu.id}</strong><br>
+          Stock: ${docu.data().cantidad}
+        </div>
+      `;
+    });
+  });
+}
+
+setLugar("antorcha");
+</script>
+
+</body>
+</html>
