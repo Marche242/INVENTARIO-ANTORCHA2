@@ -88,13 +88,15 @@ function escuchar() {
   onSnapshot(collection(db, "inventario", lugarActual, "bebidas"), (snapshot) => {
     lista.innerHTML = "";
     snapshot.forEach((docu) => {
-      lista.innerHTML += `
-        <div class="card">
-          <strong>${docu.id}</strong><br>
-          Stock: ${docu.data().cantidad}
-        </div>
-      `;
-    });
+  if (docu.data().cantidad <= 0) return;
+
+  lista.innerHTML += `
+    <div class="card">
+      <strong>${docu.id}</strong><br>
+      Stock: ${docu.data().cantidad}
+    </div>
+  `;
+});
   });
 }
 
